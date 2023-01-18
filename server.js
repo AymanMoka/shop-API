@@ -23,7 +23,12 @@ mongoose.connect(
 );//connect to db
 
 const categoryRoute = require('./routes/categoryRoute');
-app.use('/api/v1/categories',categoryRoute); //category middleware
+app.use('/api/v1/categories', categoryRoute); //category middleware
+
+const productRoute = require('./routes/productRoute');
+app.use('/api/v1/products', productRoute); //category middleware
+
+
 app.listen(3000, () => {
   console.log("Server Started");
 });//strat server
