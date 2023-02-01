@@ -55,7 +55,7 @@ module.exports = {
                 {color:req.body.color}
             ]})
         if(invalid){
-            return res.status(500).json({message:'Category Already Here'})
+            return res.status(500).json({message:'Category already here or not changed'})
         }
         const categoryId = req.params.id;
         if(!isValidObjectId(categoryId)){

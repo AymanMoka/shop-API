@@ -29,8 +29,12 @@ module.exports = {
       });
   },
   getAllProducts(req, res) {
-    Product.find({})
-      .select("name image category -_id")
+   let filter = {};
+    if (req.query.categories) { 
+      filter = { category: req.query.categories.split(',') };
+    }
+    Product.find(filter)
+      .select("name image category price")
       .populate("category")
       .then((products) => {
         return res.status(200).json({ products: products });
@@ -83,4 +87,44 @@ module.exports = {
         return res.status(500).json({ message: err.message });
       });
   },
+
+  deleteProduct(req, res) {
+    const productId = req.params.id;
+    if (!isValidObjectId(productId)) {
+      return res.status(500).json({ message: "Product Id is not valid" });
+    }
+    Product.findByIdAndDelete(productId)
+      .then((product) => {
+        return res.status(200).json({ message: "Product deleted" });
+      })
+      .catch((err) => {
+        return res.status(500).json({ message: err.message });
+      });
+  },
+
+  productsCount(req, res) {
+    try {
+      const productCount = Product.countDocuments((count) => {
+        count;
+      });
+      if (!productCount) {
+        return res.status(500).json({ message: "No Products Count" });
+      }
+      return res.status(200).json({ count: productCount });
+    } catch (error) {
+      return res.status(500).json({ message: error.message });
+    }
+  },
+  getFeaturedProducts(req, res) {
+    Product.find({ isFeatured: true })
+      .populate("category")
+      .then((products) => {
+        return res.status(200).json({ featured_products: products });
+      })
+      .catch((err) => {
+        return res.status(500).json({ message: err.message });
+      });
+  },
 };
+
+
