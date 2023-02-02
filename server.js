@@ -28,6 +28,9 @@ app.use('/api/v1/categories', categoryRoute); //category middleware
 const productRoute = require('./routes/productRoute');
 app.use('/api/v1/products', productRoute); //category middleware
 
+const userRoute = require('./routes/userRoute');
+app.use("/api/v1/users", userRoute); //users middleware
+
 
 app.listen(3000, () => {
   console.log("Server Started");

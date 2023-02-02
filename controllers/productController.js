@@ -29,9 +29,9 @@ module.exports = {
       });
   },
   getAllProducts(req, res) {
-   let filter = {};
-    if (req.query.categories) { 
-      filter = { category: req.query.categories.split(',') };
+    let filter = {};
+    if (req.query.categories) {
+      filter = { category: req.query.categories.split(",") };
     }
     Product.find(filter)
       .select("name image category price")
@@ -103,17 +103,11 @@ module.exports = {
   },
 
   productsCount(req, res) {
-    try {
-      const productCount = Product.countDocuments((count) => {
-        count;
-      });
-      if (!productCount) {
-        return res.status(500).json({ message: "No Products Count" });
-      }
-      return res.status(200).json({ count: productCount });
-    } catch (error) {
-      return res.status(500).json({ message: error.message });
-    }
+    Product.countDocuments({}).then((result) => {
+      return res.status(200).json({ count: result });
+    }).catch((err) => {
+      return res.status(500).json({ message: err.message });
+    });
   },
   getFeaturedProducts(req, res) {
     Product.find({ isFeatured: true })
@@ -126,5 +120,3 @@ module.exports = {
       });
   },
 };
-
-
