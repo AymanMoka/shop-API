@@ -3,6 +3,7 @@ const Joi = require("joi");
 const Bcrypt = require("bcryptjs");
 const { isValidObjectId } = require("mongoose");
 const Http = require("http-status-codes");
+const Jwt = require("jsonwebtoken");
 module.exports = {
   async register(req, res) {
     const userSchmea = Joi.object({
@@ -55,9 +56,14 @@ module.exports = {
               .status(Http.StatusCodes.INTERNAL_SERVER_ERROR)
               .json({ message: "Invalid user data" });
           }
+          const token = Jwt.sign(
+            { userId: user._id, isAdmin: user.isAdmin },
+            process.env.JWT_SECRET,
+            { expiresIn: "1d" }
+          );
           res
             .status(Http.StatusCodes.CREATED)
-            .json({ message: "user created", user: user });
+            .json({ message: "user created", token: token });
         })
         .catch((err) => {
           res
@@ -68,29 +74,43 @@ module.exports = {
   },
 
   login(req, res) {
-    if (!req.body.email || !req.body.password) { 
+    if (!req.body.email || !req.body.password) {
       return res
         .status(Http.StatusCodes.BAD_REQUEST)
         .json({ message: "email and password are required" });
     }
-    User.findOne({ email: req.body.email.toLowerCase() }).then(async (user) => {
-      if (!user) {
+    User.findOne({ email: req.body.email.toLowerCase() })
+      .then(async (user) => {
+        if (!user) {
+          return res
+            .status(Http.StatusCodes.NOT_FOUND)
+            .json({ message: "Invalid email" });
+        }
+        const validPassword = await Bcrypt.compare(
+          req.body.password,
+          user.password
+        );
+        if (!validPassword) {
+          return res
+            .status(Http.StatusCodes.NOT_FOUND)
+            .json({ message: "Invalid password" });
+        }
+        const token = Jwt.sign(
+          { userId: user._id, isAdmin: user.isAdmin },
+          process.env.JWT_SECRET,
+          {
+            expiresIn: "1d",
+          }
+        );
         return res
-          .status(Http.StatusCodes.NOT_FOUND)
-          .json({ message: "Invalid email" });
-      }
-      const validPassword = await Bcrypt.compare(req.body.password, user.password);
-      if (!validPassword) { 
-        return res
-          .status(Http.StatusCodes.NOT_FOUND)
-          .json({ message: "Invalid password" });
-      }
-      return res.status(Http.StatusCodes.OK).json({ message: "login successful", user: user });
-    }).catch((err) => {
-      res
-        .status(Http.StatusCodes.INTERNAL_SERVER_ERROR)
-        .json({ message: err.message });
-    });
+          .status(Http.StatusCodes.OK)
+          .json({ message: "login successful", token: token });
+      })
+      .catch((err) => {
+        res
+          .status(Http.StatusCodes.INTERNAL_SERVER_ERROR)
+          .json({ message: err.message });
+      });
   },
 
   getUserList(req, res) {
